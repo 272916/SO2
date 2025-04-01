@@ -6,5 +6,6 @@ cmake_install.cmake
 .vscode/
 *.o
 *.exe
+*.a
 
 # There should probably be more things here but honestly it's been a while since I've done this so I don't remember the proper way a gitignore should look
