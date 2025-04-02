@@ -7,7 +7,7 @@
 // Basically the mutex class
 class Fork {
     volatile bool is_available; // volatile so that it definitely doesn't get optimized into nonexistence. I don't think it would since it gets changed by the program, but might as well to be safe
-    Philosopher* owner; // the philosopher currently holding the fork. Probably won't be used in the actual program but might be good for debugging
+    // Philosopher* owner; // the philosopher currently holding the fork. Probably won't be used in the actual program but might be good for debugging
 
     public:
         Fork() { this->is_available = true; }
@@ -62,7 +62,6 @@ Fork* forks;
 
 // Class for the philosophers.
 class Philosopher {  
-    static int n_philosophers;  // the total number of philosophers in the program
     int id;
     volatile bool is_at_table;
     std::thread phil_thread; // I realize that phil is a name, but I don't want to have to write philosopher every time
@@ -82,6 +81,7 @@ class Philosopher {
     
 
     public:
+        static int n_philosophers;  // the total number of philosophers in the program
         Philosopher() {  } // a default empty constructor just so the array can be initialized later
 
         Philosopher(int id, double think, double eat) {
@@ -145,10 +145,13 @@ class Philosopher {
 
 };
 
+int Philosopher::n_philosophers = 0;
+
 int main(int argc, char* argv[]) {
     if (argc != 2) return 1; // this program should only take one argument: the number of philosophers. If there isn't exactly 1 argument, something's gone horribly wrong
 
     int n_philosophers = std::atoi(argv[1]);
+    Philosopher::n_philosophers = n_philosophers;
 
     // std::cout << "You inputted: " << n_philosophers << "\n";
 
