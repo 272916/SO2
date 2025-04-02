@@ -123,3 +123,10 @@ Zachowanie wątku wygląda następująco:
 - filozof je przez określony dla niego czas (*time_eating*)
 - filozof odkłada oba widelce, zwalniając oba zasoby
 - filozof odchodzi od stołu, zwalniając zasób w postaci miejsca przy stole
+
+Aktualny stan filozofa (zamyślony, głodny, jedzący) zmieniany jest na bierząco wraz z działaniem wątka danego filozofa.
+
+Wypisywanie własnego stanu przez każdego filozofa przy każdej zmianie stanu było bardzo nieczytelne i powodowało co jakiś czas *race condition*, gdy więcej niż jeden filozof próbował wypisać swój stan do konsoli jednocześnie, mieszając ze sobą komunikaty. Wprowadzony został mechanizm synchronizacji poprzez blokowanie pojedynczego zasobu pozwalającego na pisanie do konsoli. To rozwiązanie jednak mogło bardzo łatwo powodować pewnego rodzaju zagłodzenie, w którym któryś filozof nigdy nie komunikowałby swojego stanu (pomimo jego zmiany).
+
+Aktualna wersja programu wykorzystuje pojedynczy osobny wątek do wypisania stanu każdego filozofa po kolei co 500ms.
+Rozwiązanie to znacząco poprawia czytelność, chociaż nie jest idealne. Wewnętrzne stany filozofów w zmieniają się ciągle, a wyświetlane są tylko co 500ms. Oznacza to, że zmiany mogą zostać pominięte podczas wyświetlania, jeżeli staną się zbyt szybko. Sposób ten zdaje się jednak być lepszy od poprzedniego.
