@@ -37,7 +37,7 @@ class Table {
 
     Fork seat_block;            // added after everything else. A mutex to avoid having the same last "seat" at the table changed at the same time.
                                 // calling this class Fork doesn't really make sense anymore, but I'm going to keep it.         
-                                // this might actually create starvation in the way that it means only 1 philosopher can approach the table at once
+                                // this might actually create starvation in the way that it means only 1 philosopher can approach the table at once, but it should be fine
     public:
         Table(int n) {
             this->max_at_table = n;
@@ -46,25 +46,32 @@ class Table {
 
         void Wait_for_a_seat() {
             while (true) {
-                seat_block.Take();
+                this->seat_block.Take();
                 if (this->n_at_table < this->max_at_table) {
                     this->n_at_table++;
-                    seat_block.Put_back();
+                    this->seat_block.Put_back();
                     return;
                 }
-                seat_block.Put_back();
+                this->seat_block.Put_back();
                 std::this_thread::yield();
             }
         }
 
         void Leave_table() {
-            if (this->n_at_table > 0) this->n_at_table--;
+            if (this->n_at_table > 0) { // in theory this should always be true, but I'm not risking it
+                this->seat_block.Take();
+                this->n_at_table--;
+                this->seat_block.Put_back();
+            }
         }
 };
 
 Table* table;
 Fork* forks;
 Fork cout_lock; // this SHOULD be used for controlling console output, to avoid a race condition where more than 1 philosopher tries printing at the same time
+// a lock on the console output could in theory create starvation in the sense that some philosopher might never get the chance to output their state
+// but internally they should still be thinking/waiting/eating, so it shouldn't actually change how the program works
+// and in practice outputting takes so little time and I'm setting the times to long enough that the number of philosophers would need to be incredibly high for starvation to happen (I think)
 
 // Class for the philosophers.
 class Philosopher {  
