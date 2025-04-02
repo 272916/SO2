@@ -1,9 +1,12 @@
 #include <iostream>
-#include <cstdlib> //just to have std::atoi
+#include <cstdlib>
 #include <thread>
 #include <chrono>
 #include <iomanip>
 #include <string>
+#include <cstdlib>
+#include <ctime>
+#include <random>
 
 // Basically the mutex class
 class Fork {
@@ -197,9 +200,20 @@ int main(int argc, char* argv[]) {
 
     Philosopher* philosophers = new Philosopher[n_philosophers];
 
-    double thinking_time = 1000, eating_time = 1000; // these could be made random (entirely or partially with a range), but I'm not sure if they should/need to be for this project
+    double  min_thinking_time = 500, max_thinking_time = 1500,
+            min_eating_time = 500, max_eating_time = 1500,
+            thinking_time, eating_time;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> think_dist(min_thinking_time, max_thinking_time);
+    std::uniform_real_distribution<> eat_dist(min_eating_time, max_eating_time);
 
     for (int i = 0; i < n_philosophers; i++) {
+        // thinking_time = min_thinking_time + (std::rand() / (RAND_MAX + 1.0)) * (max_thinking_time - min_thinking_time);
+        // eating_time = min_eating_time + (std::rand() / (RAND_MAX + 1.0)) * (max_eating_time - min_eating_time);
+        thinking_time = think_dist(gen);
+        eating_time = eat_dist(gen);
         philosophers[i] = Philosopher(i, thinking_time, eating_time);
     }
 
@@ -209,7 +223,7 @@ int main(int argc, char* argv[]) {
         philosophers[i].Dine();
     }
 
-    std::thread state_thread(&Print_phil_states, philosophers, n_philosophers, 250);
+    std::thread state_thread(&Print_phil_states, philosophers, n_philosophers, 500);
 
     // making sure that the program doesn't finish before all of the philosopher threads do
     for (int i = 0; i < n_philosophers; i++) {
