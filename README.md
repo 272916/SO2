@@ -48,13 +48,6 @@ cmake -DCMAKE_CXX_COMPILER=clang++ ..
 make
 ```
 
-MSVC:
-```
-cmake -G "Visual Studio 17 2022" ..
-```
-```
-cmake --build
-```
 
 GCC:
 ```
