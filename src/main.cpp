@@ -2,6 +2,7 @@
 #include <cstdlib> //just to have std::atoi
 #include <thread>
 #include <chrono>
+#include <vector>
 
 // Basically the mutex class
 class Fork {
@@ -56,11 +57,18 @@ class Table {
         }
 };
 
+Table* table;
+Fork* forks;
+
 // Class for the philosophers.
 class Philosopher {  
     static int n_philosophers;  // the total number of philosophers in the program
     int id;
     volatile bool is_at_table;
+    std::thread phil_thread; // I realize that phil is a name, but I don't want to have to write philosopher every time
+    double time_thinking;
+    double time_eating;
+    // the time_ members are how long it'll take the philosopher to think/eat, both in milliseconds
 
     // Apparently using enum class instead of a plain enum causes less issues and is more safe, since they don't implicitly conver to other types and is scoped
     // (that's a lot of words and I'm not 100% sure whether it would actually matter here)
@@ -71,6 +79,69 @@ class Philosopher {
     };
 
     philosopher_state state;
+    
+
+    public:
+        Philosopher() {  } // a default empty constructor just so the array can be initialized later
+
+        Philosopher(int id, double think, double eat) {
+            this->id = id;
+            this->time_thinking = think;
+            this->time_eating = eat;
+            this->state = philosopher_state::THINKING;
+        }
+
+        void Dine() {
+            this->phil_thread = std::thread(&Philosopher::Live, this);
+        }
+
+        // this is just everything the philosopher does in the problem
+        void Live() { // this is a really bad name for this function, but I don't have any better ideas
+            int left_fork = this->id;
+            int right_fork = (this->id + 1) % Philosopher::n_philosophers; // to make it cycle for the last philosopher
+
+            while (true) {
+                this->Set_state(philosopher_state::THINKING);
+                std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(this->time_thinking));
+
+                this->Set_state(philosopher_state::HUNGRY);
+
+                table->Wait_for_a_seat();
+
+                forks[left_fork].Take();
+                forks[right_fork].Take();
+
+                this->Set_state(philosopher_state::EATING);
+                std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(this->time_eating));
+
+                forks[left_fork].Put_back();
+                forks[right_fork].Put_back();
+
+                table->Leave_table();
+            }
+        }
+
+        void Set_state (philosopher_state new_state) {
+            this->state = new_state;
+            std::cout << "Phil " << this->id << " is " << this->Get_state_as_String() << "\n";
+        }
+
+        std::string Get_state_as_String() {
+            switch (this->state) {
+                case philosopher_state::EATING:
+                    return "eating";
+                case philosopher_state::HUNGRY:
+                    return "hungry";
+                case philosopher_state::THINKING:
+                    return "thinking";
+                default:
+                    return "on fire";
+            }
+        }
+
+        void Join() {
+            this->phil_thread.join();
+        }
 
 };
 
@@ -79,7 +150,43 @@ int main(int argc, char* argv[]) {
 
     int n_philosophers = std::atoi(argv[1]);
 
-    std::cout << "You inputted: " << n_philosophers << "\n";
+    // std::cout << "You inputted: " << n_philosophers << "\n";
+
+    forks = new Fork[n_philosophers];
+    table = new Table(n_philosophers-1);
+
+    /* copy for reference
+    Philosopher(int id, double think, double eat) {
+            this->id = id;
+            this->time_thinking = think;
+            this->time_eating = eat;
+            this->state = philosopher_state::THINKING;
+        }
+    */
+
+    Philosopher* philosophers = new Philosopher[n_philosophers];
+
+    double thinking_time = 1000, eating_time = 1000; // these could be made random (entirely or partially with a range), but I'm not sure if they should/need to be for this project
+
+    for (int i = 0; i < n_philosophers; i++) {
+        philosophers[i] = Philosopher(i, thinking_time, eating_time);
+    }
+
+    // starting the philosophers only after creating all of them to avoid anything weird happening
+    // it doesn't seem fair for a philosopher to take 2 forks and start eating before another one even exists
+    for (int i = 0; i < n_philosophers; i++) {
+        philosophers[i].Dine();
+    }
+
+    // making sure that the program doesn't finish before all of the philosopher threads do
+    for (int i = 0; i < n_philosophers; i++) {
+        philosophers[i].Join();
+    }
+    // currently, the philosophers never really finish. But that's besides the point.
+
+    delete[] forks;
+    delete table;
+    delete[] philosophers;
 
     return 0;
 }
