@@ -2,6 +2,8 @@
 #include <cstdlib> //just to have std::atoi
 #include <thread>
 #include <chrono>
+#include <iomanip>
+#include <string>
 
 // Basically the mutex class
 class Fork {
@@ -136,9 +138,9 @@ class Philosopher {
 
         void Set_state (philosopher_state new_state) {
             this->state = new_state;
-            cout_lock.Take();
-            std::cout << "Phil " << this->id << " is " << this->Get_state_as_String() << "\n";
-            cout_lock.Put_back();
+            // cout_lock.Take();
+            // std::cout << "Phil " << this->id << " is " << this->Get_state_as_String() << "\n";
+            // cout_lock.Put_back();
         }
 
         std::string Get_state_as_String() {
@@ -162,6 +164,26 @@ class Philosopher {
 
 int Philosopher::n_philosophers = 0;
 
+// Function for printing the states of all philosophers.
+// With this, I don't have to use cout_lock and risk a philosopher never getting the chance to output its state
+// on the other hand, this will be painfully unreadable with a lot of philosophers. But the previous approach also had this problem.
+void Print_phil_states(Philosopher* philosophers, int n, double time_between_updates) { // time between updates given in milliseconds
+    std::string output = "";
+    while (true) {
+        output = "";
+        //std::cout << "Philosopher States:\n--------------------\n";
+        output += "Philosopher States:\n--------------------\n";
+        for (int i = 0; i < n; i++) {
+            //std::cout << "| " << std::setw(3) << i << " | " << std::setw(10) << philosophers[i].Get_state_as_String() << " |\n";
+            output += "| " + std::to_string(i) + " | " + std::string(10 - philosophers[i].Get_state_as_String().length(), ' ') + philosophers[i].Get_state_as_String() + " |\n";
+        }
+        //std::cout << "--------------------\n";
+        output += "--------------------\n";
+        std::cout << output;
+        std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(time_between_updates));
+    }
+}
+
 int main(int argc, char* argv[]) {
     if (argc != 2) return 1; // this program should only take one argument: the number of philosophers. If there isn't exactly 1 argument, something's gone horribly wrong
 
@@ -172,15 +194,6 @@ int main(int argc, char* argv[]) {
 
     forks = new Fork[n_philosophers];
     table = new Table(n_philosophers-1); // -1 to not cause a deadlock where every philosopher goes to the table, grabs one fork and waits
-
-    /* copy for reference
-    Philosopher(int id, double think, double eat) {
-            this->id = id;
-            this->time_thinking = think;
-            this->time_eating = eat;
-            this->state = philosopher_state::THINKING;
-        }
-    */
 
     Philosopher* philosophers = new Philosopher[n_philosophers];
 
@@ -196,11 +209,15 @@ int main(int argc, char* argv[]) {
         philosophers[i].Dine();
     }
 
+    std::thread state_thread(&Print_phil_states, philosophers, n_philosophers, 250);
+
     // making sure that the program doesn't finish before all of the philosopher threads do
     for (int i = 0; i < n_philosophers; i++) {
         philosophers[i].Join();
     }
     // currently, the philosophers never really finish. But that's besides the point.
+
+    state_thread.join();
 
     delete[] forks;
     delete table;
