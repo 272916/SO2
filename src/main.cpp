@@ -18,7 +18,7 @@ class Fork {
 
         void Take() {
             while (true) {
-                if (this->is_available) { // I know there are theoretically better ways to do this (like even __sync_), but with the restrictions for this project I'm honestly just unsure whether we're allowed to use those
+                if (this->is_available) { // I know there are better ways to do this (like even __sync_), but with the restrictions for this project I'm honestly just unsure whether we're allowed to use those
                     this->is_available = false;
                     return;
                 }
@@ -82,7 +82,7 @@ Fork cout_lock; // this SHOULD be used for controlling console output, to avoid 
 class Philosopher {  
     int id;
     volatile bool is_at_table;
-    std::thread phil_thread; // I realize that phil is a name, but I don't want to have to write philosopher every time
+    std::thread phil_thread; // I realize that phil is a name, but I don't want to have to write philosopher
     double time_thinking;
     double time_eating;
     // the time_ members are how long it'll take the philosopher to think/eat, both in milliseconds
@@ -96,7 +96,6 @@ class Philosopher {
     };
 
     philosopher_state state;
-    
 
     public:
         static int n_philosophers;  // the total number of philosophers in the program
