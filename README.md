@@ -17,12 +17,16 @@ Kroki zbudowania i uruchomienia projektu są następujące:
 ### 1. Sklonowanie repozytorium:
 ```
 git clone https://github.com/272916/SO2.git
+```
+```
 cd SO2
 ```
 
 ### 2. Stworzenie i wejście do katalogu build
 ```
 mkdir build
+```
+```
 cd build
 ```
 katalog build powinien być na tym samym poziomie, co katalog /src
@@ -31,24 +35,32 @@ katalog build powinien być na tym samym poziomie, co katalog /src
 MinGW:
 ```
 cmake -G "MinGW Makefiles" ..
+```
+```
 mingw32-make
 ```
 
 Clang:
 ```
 cmake -DCMAKE_CXX_COMPILER=clang++ ..
+```
+```
 make
 ```
 
 MSVC:
 ```
 cmake -G "Visual Studio 17 2022" ..
+```
+```
 cmake --build
 ```
 
 GCC:
 ```
 cmake -DCMAKE_CXX_COMPILER=g++ ..
+```
+```
 make
 ```
 
