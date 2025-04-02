@@ -8,9 +8,6 @@
 - nigdy nie powinno dojść do trwałego zablokowania wątków
 - program jako argument otrzymuje liczbę filozofów
 
-## Opis problemu
-
-
 ## Uruchomienie projektu
 Przed próbą uruchomienia programu należy upewnić się, że ma się zainstalowany kompilator C++ oraz CMake.
 Program oryginalnie napisany został na systemie Windows 11 przy użyciu MinGW.
