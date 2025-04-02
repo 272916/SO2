@@ -2,7 +2,6 @@
 #include <cstdlib> //just to have std::atoi
 #include <thread>
 #include <chrono>
-#include <vector>
 
 // Basically the mutex class
 class Fork {
@@ -36,6 +35,9 @@ class Table {
     volatile int n_at_table;    // this hsould always be lower or equal to max_at_table (so that we don't get every philosopher grabbing 1 fork each and waiting)
                                 // this value might not actually be needed, but it might be good to have it for testing
 
+    Fork seat_block;            // added after everything else. A mutex to avoid having the same last "seat" at the table changed at the same time.
+                                // calling this class Fork doesn't really make sense anymore, but I'm going to keep it.         
+                                // this might actually create starvation in the way that it means only 1 philosopher can approach the table at once
     public:
         Table(int n) {
             this->max_at_table = n;
@@ -44,10 +46,13 @@ class Table {
 
         void Wait_for_a_seat() {
             while (true) {
+                seat_block.Take();
                 if (this->n_at_table < this->max_at_table) {
                     this->n_at_table++;
+                    seat_block.Put_back();
                     return;
                 }
+                seat_block.Put_back();
                 std::this_thread::yield();
             }
         }
@@ -59,6 +64,7 @@ class Table {
 
 Table* table;
 Fork* forks;
+Fork cout_lock; // this SHOULD be used for controlling console output, to avoid a race condition where more than 1 philosopher tries printing at the same time
 
 // Class for the philosophers.
 class Philosopher {  
@@ -123,7 +129,9 @@ class Philosopher {
 
         void Set_state (philosopher_state new_state) {
             this->state = new_state;
+            cout_lock.Take();
             std::cout << "Phil " << this->id << " is " << this->Get_state_as_String() << "\n";
+            cout_lock.Put_back();
         }
 
         std::string Get_state_as_String() {
@@ -156,7 +164,7 @@ int main(int argc, char* argv[]) {
     // std::cout << "You inputted: " << n_philosophers << "\n";
 
     forks = new Fork[n_philosophers];
-    table = new Table(n_philosophers-1);
+    table = new Table(n_philosophers-1); // -1 to not cause a deadlock where every philosopher goes to the table, grabs one fork and waits
 
     /* copy for reference
     Philosopher(int id, double think, double eat) {
